@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Cake</title>
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div id="birthdaytext">Happy Birthday!</div>
+        <div class="cake-container">
+            <div class="cake" id="cake"></div>
+        </div>
+        <button id="startBtn">Start Celebration 🎂</button>
+
+<audio id="bgMusic" loop>
+    <source src="her.mp3" type="audio/mpeg">
+</audio>
+
+<div class="gallery">
+
+    <div class="photos">
+
+        <div class="row">
+            <img src="img1.jpg">
+            <img src="img2.jpeg">
+        </div>
+
+        <div class="row center-row">
+            <img src="img3.jpg">
+        </div>
+
+        <div class="row">
+            <img src="img4.jpeg">
+            <img src="img5.jpeg">
+        </div>
+
+    </div>
+
+    <div class="message-card">
+
+        To My Dearest Chikki ❤️
+        <br><br>
+
+        Maybe I’m not the best at expressing it sometimes,
+        but I genuinely love you so much.
+        <br><br>
+
+        Thank you for always staying by my side,
+        supporting me,
+        and making life feel beautiful.
+        <br><br>
+
+        Happy Birthday My Love 🎂❤️
+
+    </div>
+
+</div>
+</div>
+
+    <script>
+        const params    = new URLSearchParams(window.location.search);
+        const name      = params.get('name') || 'Aliza My Love';
+
+        let candleCount = parseInt(params.get("candles")) || 4;
+        candleCount = Math.min(Math.max(candleCount, 1), 30);
+
+        const birthdayText = document.getElementById('birthdaytext');
+        birthdayText.innerHTML = `
+            <div id="mainTitle">Happy Birthday, ${name}!</div>
+            <div id="subTitle">Make a wish and blow the candles!</div>
+        `;
+
+const cake = document.getElementById('cake');
+
+// candle colors
+const colors = [
+    "green-candle",
+    "blue-candle",
+    "red-candle", 
+    "purple-candle",
+]; 
+
+const CAKE_VISUAL_WIDTH = 35;
+
+// add candles on top of cake
+
+function createCandles(count) {
+    cake.innerHTML = '';
+    const CANDLE_VISUAL_WIDTH = 2;
+    const availableWidth = CAKE_VISUAL_WIDTH;
+    const candlesPerRow = 6;
+    const rowcount = Math.ceil(count / candlesPerRow);
+    const shiftAmount = 4;
+
+    for (let i = 0; i < count; i++) {
+        const candle = document.createElement('div');
+        candle.classList.add("candle");
+        const colorClass = colors[Math.floor(Math.random() * colors.length)];
+        candle.classList.add(colorClass);
+
+        const row = Math.floor(i / candlesPerRow);
+        const col = i % candlesPerRow;
+        const TotalCandleInRow= Math.min(candlesPerRow, count - row * candlesPerRow);
+    
+        const rowSpacing = availableWidth / (TotalCandleInRow + 1);
+
+        const leftBase = rowSpacing * (col + 1) - CANDLE_VISUAL_WIDTH / 2 + 5;
+        const rowShift = row % 2 === 0 ? 0 : shiftAmount;
+
+        candle.style.position = "absolute";
+        candle.style.top = `${10 + row * 3}px`;
+        candle.style.left = `${leftBase - rowShift + 4}px`;
+
+        cake.appendChild(candle);
+    }
+}
+
+createCandles(candleCount);
+
+// Microphone blow detection
+
+async function startMicDetection() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: true,
+        });
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        let blown = false;
+
+        function detectBlow() {
+
+    analyser.getByteFrequencyData(dataArray);
+
+    let volume = 0;
+
+    for (let i = 0; i < dataArray.length; i++) {
+        volume += dataArray[i];
+    }
+
+    volume = volume / dataArray.length;
+
+    console.log(volume);
+
+    if (volume > 10 && !blown) {
+        blown = true;
+        blowOutCandles();
+    }
+
+    requestAnimationFrame(detectBlow);
+}
+
+        detectBlow();
+    } catch (err) {
+        console.error('Error accessing microphone:', err);
+    }
+}
+
+function blowOutCandles() {
+    const music = document.getElementById("bgMusic");
+
+music.volume = 0.3;
+
+music.play();
+
+    const candles = document.querySelectorAll('.candle');
+    candles.forEach ((candle) => {
+        const delay = Math.random() * 1000;
+        setTimeout(() => {
+            colors.forEach((color) => {
+                if (candle.classList.contains(color)) {
+                    candle.classList.add("blown");
+                }
+            });
+        }, delay);  
+    } );
+
+    setTimeout(() => {
+        const subtitle = document.getElementById('subTitle');
+        subtitle.textContent = "Happiest Birthday to the LOML!!";
+        document.querySelector(".cake-container").style.display = "none";
+        document.querySelector(".gallery").style.display = "flex";
+    }, 1200);
+}
+
+
+document.getElementById("startBtn").addEventListener("click", () => {
+
+    startMicDetection();
+
+    document.getElementById("startBtn").style.display = "none";
+});
+    </script>
+</body>
+</html>
